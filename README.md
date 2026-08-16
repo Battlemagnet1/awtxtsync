@@ -1,0 +1,47 @@
+# AWtxtSync
+
+跨设备文字框同步工具 —— 一套代码同时产出 **Windows `.exe`** 和 **Android `.apk`**（局域网内使用）。
+
+## 功能
+
+1. **连接**：电脑↔电脑、手机↔手机、电脑↔手机；服务器/客户端架构，一个应用同时包含服务器与客户端，支持多客户端同时连接一台服务器。
+2. **文本框同步**：任意设备在文本框输入，内容实时同步到所有已连接设备；文本框原生支持长按（手机）/ 右键（电脑）复制、粘贴。
+3. **文字保存**：点「保存文字」将文本框内容写入 `.txt`（默认文件名「日期+时间」），文件保存在服务器端、默认不同步；客户端可浏览文件列表并点击「同步」自动下载到本地。
+
+## 技术栈
+
+- Flutter（Dart），单代码库编译 `android` + `windows`
+- WebSocket 全双工通信（`web_socket_channel` + `dart:io`）
+- UDP 广播自动发现设备（`dart:io` RawDatagramSocket）
+- `path_provider` 文件存储、`provider` 状态管理、`qr_flutter` 二维码
+
+## 默认端口
+
+- WebSocket 服务：`7777`
+- UDP 发现广播：`7778`
+
+## 构建
+
+```bash
+flutter pub get
+flutter build windows        # 生成 build/windows/x64/runner/Release/awtxtsync.exe
+flutter build apk            # 生成 build/app/outputs/flutter-apk/app-release.apk
+```
+
+## 环境要求
+
+- Flutter SDK（stable）
+- **Windows exe**：Visual Studio 2022 +「使用 C++ 的桌面开发」工作负载
+- **Android apk**：Android Studio + Android SDK + JDK
+
+## 使用说明
+
+1. 一台设备点「启动服务器」，会显示本机 IP:端口 和二维码；其它设备点「连接设备」，可自动发现或手动输入地址连接。
+2. 连接成功后，任意设备在文本框输入都会实时同步到所有设备。
+3. 点「保存文字」自定义文件名（默认日期+时间）保存到服务器；客户端在「浏览文件」中点击下载。
+
+## 注意事项
+
+- **Windows 防火墙**：首次启动服务器时若被防火墙拦截，请允许 awtxtsync.exe 访问专用网络（或手动放行 7777 端口）。
+- 所有设备需处于**同一局域网**。
+- 文本同步采用「最后写入优先」，服务器为仲裁者；多设备同时输入时以服务器最后收到的为准。
