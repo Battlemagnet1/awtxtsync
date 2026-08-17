@@ -128,6 +128,9 @@ class ServerService extends ChangeNotifier {
       case 'download':
         _handleDownload(socket, msg.data['filename'] as String? ?? '');
         break;
+      case 'open':
+        _handleOpen(socket, msg.data['filename'] as String? ?? '');
+        break;
     }
   }
 
@@ -154,6 +157,11 @@ class ServerService extends ChangeNotifier {
   Future<void> _handleDownload(WebSocket socket, String filename) async {
     final content = await fileStore.readFile(filename);
     _sendTo(socket, Message('file_data', {'filename': filename, 'content': content}));
+  }
+
+  Future<void> _handleOpen(WebSocket socket, String filename) async {
+    final content = await fileStore.readFile(filename);
+    _sendTo(socket, Message('open_result', {'filename': filename, 'content': content}));
   }
 
   Future<void> _refreshFiles() async {

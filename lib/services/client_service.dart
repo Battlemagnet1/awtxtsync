@@ -19,6 +19,7 @@ class ClientService extends ChangeNotifier {
   List<SavedFile> _files = [];
   String? _lastDownloadedName;
   String? _lastDownloadedPath;
+  final Map<String, Completer<String>> _pendingOpens = {};
 
   bool get connected => _connected;
   String get text => _text;
@@ -47,6 +48,10 @@ class ClientService extends ChangeNotifier {
     _connected = false;
     _channel = null;
     _sub = null;
+    for (final c in _pendingOpens.values) {
+      if (!c.isCompleted) c.complete('');
+    }
+    _pendingOpens.clear();
     notifyListeners();
   }
 
@@ -77,6 +82,10 @@ class ClientService extends ChangeNotifier {
           msg.data['filename'] as String? ?? '',
           msg.data['content'] as String? ?? '',
         );
+        break;
+      case 'open_result':
+        _pendingOpens.remove(msg.data['filename'] as String? ?? '')
+            ?.complete(msg.data['content'] as String? ?? '');
         break;
     }
   }
@@ -111,6 +120,13 @@ class ClientService extends ChangeNotifier {
 
   void downloadFile(String filename) {
     _send(Message('download', {'filename': filename}));
+  }
+
+  Future<String> openFile(String filename) {
+    final c = Completer<String>();
+    _pendingOpens[filename] = c;
+    _send(Message('open', {'filename': filename}));
+    return c.future.timeout(const Duration(seconds: 5), onTimeout: () => '');
   }
 
   void _send(Message msg) {

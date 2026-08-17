@@ -65,6 +65,10 @@ class _FilesScreenState extends State<FilesScreen> {
                         leading: const Icon(Icons.description),
                         title: Text(f.name),
                         subtitle: Text('${_formatSize(f.size)} · ${f.date}'),
+                        onTap: () async {
+                          await state.openFileToText(f.name);
+                          if (context.mounted) Navigator.pop(context);
+                        },
                         trailing: state.isClient
                             ? IconButton(
                                 icon: const Icon(Icons.download),
@@ -76,7 +80,7 @@ class _FilesScreenState extends State<FilesScreen> {
                                   );
                                 },
                               )
-                            : const Icon(Icons.check, color: Colors.grey),
+                            : const Icon(Icons.open_in_new, color: Colors.grey),
                       );
                     },
                   ),
