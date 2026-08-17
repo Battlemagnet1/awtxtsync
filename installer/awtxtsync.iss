@@ -2,7 +2,7 @@
 ; 用法：先 flutter build windows --release，再用 ISCC.exe 编译本脚本
 
 #define MyAppName "AWtxtSync"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.1"
 #define MyAppExeName "awtxtsync.exe"
 
 [Setup]
