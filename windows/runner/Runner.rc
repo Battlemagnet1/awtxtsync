@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.awtxtsync" "\0"
-            VALUE "FileDescription", "awtxtsync" "\0"
+            VALUE "CompanyName", "AWtxtSync" "\0"
+            VALUE "FileDescription", "AWtxtSync" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "awtxtsync" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.awtxtsync. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 AWtxtSync. All rights reserved." "\0"
             VALUE "OriginalFilename", "awtxtsync.exe" "\0"
-            VALUE "ProductName", "awtxtsync" "\0"
+            VALUE "ProductName", "AWtxtSync" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
