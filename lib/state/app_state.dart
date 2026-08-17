@@ -145,6 +145,22 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  Future<void> openFileToText(String filename) async {
+    String content = '';
+    if (isServer) {
+      content = await server.fileStore.readFile(filename);
+    } else if (isClient) {
+      content = await client.openFile(filename);
+    }
+    if (content.isNotEmpty) {
+      setText(content);
+      _status = '已打开 $filename';
+    } else {
+      _status = '文件为空或不存在';
+    }
+    notifyListeners();
+  }
+
   Future<void> startDiscovery() async {
     discovered.clear();
     await discovery.startListening((s) {
