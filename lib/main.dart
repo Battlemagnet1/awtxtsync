@@ -14,12 +14,9 @@ void main() async {
   if (Platform.isAndroid) {
     await ForegroundServiceController.init();
   }
-  final appState = AppState();
-  // 启动即尝试自动连接上次的服务器（失败静默，保持 idle 首页）
-  appState.autoConnect();
   runApp(
-    ChangeNotifierProvider.value(
-      value: appState,
+    ChangeNotifierProvider(
+      create: (_) => AppState(),
       child: const AwTxtSyncApp(),
     ),
   );

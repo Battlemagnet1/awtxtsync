@@ -1,10 +1,14 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// 本地持久化：记住上次连接的服务器与设备名称。
+import '../models/saved_server.dart';
+
+/// 本地持久化：保存连接过的服务器列表 + 设备名称。
 class PrefsService {
-  static const _kIp = 'last_server_ip';
-  static const _kPort = 'last_server_port';
+  static const _kServers = 'saved_servers';
   static const _kDeviceName = 'device_name';
+  static const int _maxServers = 20;
 
   static SharedPreferences? _prefs;
 
@@ -12,25 +16,43 @@ class PrefsService {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  static Future<void> saveConnection(String ip, int port) async {
-    final p = _prefs ?? await SharedPreferences.getInstance();
-    await p.setString(_kIp, ip);
-    await p.setInt(_kPort, port);
+  /// 读取已保存的服务器列表（最新连接的在前）。
+  static List<SavedServer> loadServers() {
+    final raw = _prefs?.getString(_kServers);
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final list = jsonDecode(raw) as List;
+      return list
+          .map((e) => SavedServer.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      return [];
+    }
   }
 
-  static Future<void> clearConnection() async {
-    final p = _prefs ?? await SharedPreferences.getInstance();
-    await p.remove(_kIp);
-    await p.remove(_kPort);
+  /// 新增（或置顶）一个服务器，去重，最多保留 [_maxServers] 个。
+  static Future<void> addServer(SavedServer server) async {
+    final list = loadServers();
+    list.removeWhere((e) => e.ip == server.ip && e.port == server.port);
+    list.insert(0, server);
+    if (list.length > _maxServers) {
+      list.removeRange(_maxServers, list.length);
+    }
+    await _saveServers(list);
   }
 
-  static ({String ip, int port})? loadConnection() {
-    final p = _prefs;
-    if (p == null) return null;
-    final ip = p.getString(_kIp);
-    final port = p.getInt(_kPort);
-    if (ip == null || ip.isEmpty || port == null) return null;
-    return (ip: ip, port: port);
+  static Future<void> removeServer(String ip, int port) async {
+    final list = loadServers();
+    list.removeWhere((e) => e.ip == ip && e.port == port);
+    await _saveServers(list);
+  }
+
+  static Future<void> _saveServers(List<SavedServer> list) async {
+    final p = _prefs ?? await SharedPreferences.getInstance();
+    await p.setString(
+      _kServers,
+      jsonEncode(list.map((e) => e.toJson()).toList()),
+    );
   }
 
   static Future<void> saveDeviceName(String name) async {
