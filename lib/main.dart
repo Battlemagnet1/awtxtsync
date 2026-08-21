@@ -1,10 +1,19 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'screens/home_screen.dart';
+import 'services/foreground_service.dart';
+import 'services/prefs_service.dart';
 import 'state/app_state.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await PrefsService.init();
+  if (Platform.isAndroid) {
+    await ForegroundServiceController.init();
+  }
   runApp(
     ChangeNotifierProvider(
       create: (_) => AppState(),

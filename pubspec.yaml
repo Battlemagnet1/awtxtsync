@@ -1,7 +1,7 @@
 name: awtxtsync
 description: AWtxtSync - 跨设备文字框同步工具 (Android + Windows)
 publish_to: 'none'
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -13,6 +13,8 @@ dependencies:
   path_provider: ^2.1.2
   provider: ^6.1.1
   qr_flutter: ^4.1.0
+  shared_preferences: ^2.3.0
+  flutter_foreground_task: ^9.2.2
 
 # 固定 path_provider_android 到 JNI 迁移前的版本，避免引入 jni 插件导致 Windows 构建失败
 dependency_overrides:

@@ -5,9 +5,12 @@ import 'package:flutter/foundation.dart';
 
 import '../models/device.dart';
 import '../models/saved_file.dart';
+import '../models/saved_server.dart';
 import '../services/client_service.dart';
 import '../services/discovery_service.dart';
 import '../services/file_store_service.dart';
+import '../services/foreground_service.dart';
+import '../services/prefs_service.dart';
 import '../services/server_service.dart';
 
 enum AppMode { idle, server, client }
@@ -58,7 +61,9 @@ class AppState extends ChangeNotifier {
           : '未连接';
     } else if (isClient) {
       _text = client.text;
-      _status = client.connected ? '已连接到服务器' : '未连接';
+      _status = client.connected
+          ? '已连接到服务器'
+          : (client.reconnecting ? '连接断开，正在重连…' : '未连接');
     }
     notifyListeners();
   }
@@ -84,15 +89,33 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> connectToServer(String ip, int port) async {
+  Future<void> connectToServer(String ip, int port, {String? serverName}) async {
     await client.connect(ip, port, _deviceName);
     _mode = AppMode.client;
     await discovery.stopListening();
+    await _persistAndKeepAlive(ip, port, serverName);
     _syncFromServices();
+  }
+
+  Future<void> _persistAndKeepAlive(String ip, int port, String? serverName) async {
+    try {
+      await PrefsService.addServer(SavedServer(ip, port, serverName ?? ''));
+      await PrefsService.saveDeviceName(_deviceName);
+    } catch (_) {}
+    await ForegroundServiceController.start();
+  }
+
+  /// 已保存的服务器列表（连接页展示，点击可快速连接）。
+  List<SavedServer> get savedServers => PrefsService.loadServers();
+
+  Future<void> removeSavedServer(SavedServer server) async {
+    await PrefsService.removeServer(server.ip, server.port);
+    notifyListeners();
   }
 
   Future<void> disconnect() async {
     await client.disconnect();
+    await ForegroundServiceController.stop();
     _mode = AppMode.idle;
     _text = '';
     _status = '未连接';

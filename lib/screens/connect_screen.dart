@@ -36,7 +36,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
     super.dispose();
   }
 
-  Future<void> _connect(String ip, int port) async {
+  Future<void> _connect(String ip, int port, {String? serverName}) async {
     if (_connecting) return;
     setState(() => _connecting = true);
     final state = context.read<AppState>();
@@ -44,7 +44,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
       state.setDeviceName(_nameController.text.trim());
     }
     try {
-      await state.connectToServer(ip, port);
+      await state.connectToServer(ip, port, serverName: serverName);
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
@@ -73,6 +73,24 @@ class _ConnectScreenState extends State<ConnectScreen> {
             ),
           ),
           const SizedBox(height: 16),
+          if (state.savedServers.isNotEmpty) ...[
+            const Text('已保存的服务器', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 8),
+            ...state.savedServers.map((s) => Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.history),
+                    title: Text(s.name.isNotEmpty ? s.name : '${s.ip}:${s.port}'),
+                    subtitle: Text('${s.ip}:${s.port}'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      tooltip: '删除',
+                      onPressed: () => state.removeSavedServer(s),
+                    ),
+                    onTap: () => _connect(s.ip, s.port, serverName: s.name),
+                  ),
+                )),
+            const SizedBox(height: 16),
+          ],
           const Text('自动发现的设备', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
           const SizedBox(height: 8),
           if (state.discovered.isEmpty)
@@ -90,7 +108,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                     title: Text(s.name),
                     subtitle: Text('${s.ip}:${s.port}'),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _connect(s.ip, s.port),
+                    onTap: () => _connect(s.ip, s.port, serverName: s.name),
                   ),
                 )),
           const SizedBox(height: 24),

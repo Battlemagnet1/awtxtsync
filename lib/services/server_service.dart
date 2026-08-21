@@ -131,6 +131,9 @@ class ServerService extends ChangeNotifier {
       case 'open':
         _handleOpen(socket, msg.data['filename'] as String? ?? '');
         break;
+      case 'ping':
+        _sendTo(socket, Message('pong', {}));
+        break;
     }
   }
 
