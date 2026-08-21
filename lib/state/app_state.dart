@@ -8,6 +8,8 @@ import '../models/saved_file.dart';
 import '../services/client_service.dart';
 import '../services/discovery_service.dart';
 import '../services/file_store_service.dart';
+import '../services/foreground_service.dart';
+import '../services/prefs_service.dart';
 import '../services/server_service.dart';
 
 enum AppMode { idle, server, client }
@@ -58,7 +60,9 @@ class AppState extends ChangeNotifier {
           : '未连接';
     } else if (isClient) {
       _text = client.text;
-      _status = client.connected ? '已连接到服务器' : '未连接';
+      _status = client.connected
+          ? '已连接到服务器'
+          : (client.reconnecting ? '连接断开，正在重连…' : '未连接');
     }
     notifyListeners();
   }
@@ -88,11 +92,36 @@ class AppState extends ChangeNotifier {
     await client.connect(ip, port, _deviceName);
     _mode = AppMode.client;
     await discovery.stopListening();
+    await _persistAndKeepAlive(ip, port);
     _syncFromServices();
+  }
+
+  Future<void> _persistAndKeepAlive(String ip, int port) async {
+    try {
+      await PrefsService.saveConnection(ip, port);
+      await PrefsService.saveDeviceName(_deviceName);
+    } catch (_) {}
+    await ForegroundServiceController.start();
+  }
+
+  /// 启动时尝试自动连接上次的服务器（失败静默，保持 idle）。
+  Future<void> autoConnect() async {
+    final saved = PrefsService.loadConnection();
+    if (saved == null) return;
+    final savedName = PrefsService.loadDeviceName();
+    if (savedName != null && savedName.isNotEmpty) {
+      _deviceName = savedName;
+    }
+    try {
+      await connectToServer(saved.ip, saved.port);
+    } catch (_) {
+      // 网络未就绪或服务器不在线，保持 idle，不弹错
+    }
   }
 
   Future<void> disconnect() async {
     await client.disconnect();
+    await ForegroundServiceController.stop();
     _mode = AppMode.idle;
     _text = '';
     _status = '未连接';
